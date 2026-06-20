@@ -1,0 +1,282 @@
+# ==========================================
+# Unemployment Analysis with Python
+# Author: R Rajender Reddy
+# ==========================================
+
+# Import Libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# ------------------------------------------
+# Load Dataset
+# ------------------------------------------
+
+df = pd.read_csv("Unemployment in India.csv")
+
+print("First 5 Rows")
+print(df.head())
+
+print("\nDataset Shape:")
+print(df.shape)
+
+print("\nColumn Names:")
+print(df.columns)
+
+# ------------------------------------------
+# Data Cleaning
+# ------------------------------------------
+
+# Remove extra spaces from column names
+df.columns = df.columns.str.strip()
+
+# Rename columns for convenience
+df.rename(columns={
+    "Region": "Region",
+    "Date": "Date",
+    "Frequency": "Frequency",
+    "Estimated Unemployment Rate (%)": "Unemployment_Rate",
+    "Estimated Employed": "Employed",
+    "Estimated Labour Participation Rate (%)": "Labour_Participation_Rate",
+    "Area": "Area"
+}, inplace=True)
+
+# Check Missing Values
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+# Remove missing values
+df.dropna(inplace=True)
+
+# Convert Date Column
+df["Date"] = pd.to_datetime(df["Date"], dayfirst=True)
+
+print("\nDataset Info")
+print(df.info())
+
+# ------------------------------------------
+# Statistical Summary
+# ------------------------------------------
+
+print("\nStatistical Summary")
+print(df.describe())
+
+# ------------------------------------------
+# 1. Unemployment Rate Distribution
+# ------------------------------------------
+
+plt.figure(figsize=(10,6))
+
+sns.histplot(
+    df["Unemployment_Rate"],
+    bins=20,
+    kde=True
+)
+
+plt.title("Distribution of Unemployment Rate")
+plt.xlabel("Unemployment Rate (%)")
+plt.ylabel("Frequency")
+plt.show()
+
+# ------------------------------------------
+# 2. State-wise Average Unemployment
+# ------------------------------------------
+
+state_avg = df.groupby("Region")["Unemployment_Rate"].mean()
+
+state_avg = state_avg.sort_values()
+
+plt.figure(figsize=(12,8))
+
+state_avg.plot(kind="barh")
+
+plt.title("Average Unemployment Rate by State")
+plt.xlabel("Unemployment Rate (%)")
+
+plt.show()
+
+# ------------------------------------------
+# 3. Monthly Unemployment Trend
+# ------------------------------------------
+
+monthly_trend = df.groupby("Date")[
+    "Unemployment_Rate"
+].mean()
+
+plt.figure(figsize=(14,6))
+
+plt.plot(
+    monthly_trend.index,
+    monthly_trend.values,
+    marker='o'
+)
+
+plt.title("Monthly Unemployment Trend")
+plt.xlabel("Date")
+plt.ylabel("Average Unemployment Rate (%)")
+
+plt.grid(True)
+
+plt.show()
+
+# ------------------------------------------
+# 4. COVID-19 Impact Analysis
+# ------------------------------------------
+
+covid_date = pd.to_datetime("2020-03-01")
+
+before_covid = df[
+    df["Date"] < covid_date
+]
+
+during_covid = df[
+    df["Date"] >= covid_date
+]
+
+print("\nAverage Unemployment Before COVID:")
+print(round(before_covid["Unemployment_Rate"].mean(),2))
+
+print("\nAverage Unemployment During COVID:")
+print(round(during_covid["Unemployment_Rate"].mean(),2))
+
+# COVID Trend Graph
+
+plt.figure(figsize=(14,6))
+
+sns.lineplot(
+    x="Date",
+    y="Unemployment_Rate",
+    data=df
+)
+
+plt.axvline(
+    covid_date,
+    color="red",
+    linestyle="--",
+    label="COVID Lockdown"
+)
+
+plt.legend()
+
+plt.title("Impact of COVID-19 on Unemployment")
+
+plt.show()
+
+# ------------------------------------------
+# 5. Top 10 States with Highest Unemployment
+# ------------------------------------------
+
+top_states = (
+    df.groupby("Region")["Unemployment_Rate"]
+    .mean()
+    .sort_values(ascending=False)
+    .head(10)
+)
+
+plt.figure(figsize=(10,6))
+
+sns.barplot(
+    x=top_states.values,
+    y=top_states.index
+)
+
+plt.title("Top 10 States with Highest Unemployment")
+
+plt.xlabel("Average Unemployment Rate (%)")
+
+plt.show()
+
+# ------------------------------------------
+# 6. Rural vs Urban Analysis
+# ------------------------------------------
+
+plt.figure(figsize=(8,6))
+
+sns.boxplot(
+    x="Area",
+    y="Unemployment_Rate",
+    data=df
+)
+
+plt.title("Rural vs Urban Unemployment Rate")
+
+plt.show()
+
+# ------------------------------------------
+# 7. Correlation Heatmap
+# ------------------------------------------
+
+corr = df[
+    [
+        "Unemployment_Rate",
+        "Employed",
+        "Labour_Participation_Rate"
+    ]
+].corr()
+
+plt.figure(figsize=(8,6))
+
+sns.heatmap(
+    corr,
+    annot=True,
+    cmap="coolwarm"
+)
+
+plt.title("Correlation Heatmap")
+
+plt.show()
+
+# ------------------------------------------
+# 8. Seasonal Trend Analysis
+# ------------------------------------------
+
+df["Month"] = df["Date"].dt.month
+
+seasonal = (
+    df.groupby("Month")
+    ["Unemployment_Rate"]
+    .mean()
+)
+
+plt.figure(figsize=(10,6))
+
+plt.plot(
+    seasonal.index,
+    seasonal.values,
+    marker='o'
+)
+
+plt.title("Seasonal Unemployment Trend")
+
+plt.xlabel("Month")
+
+plt.ylabel("Average Unemployment Rate (%)")
+
+plt.grid(True)
+
+plt.show()
+
+# ------------------------------------------
+# Key Insights
+# ------------------------------------------
+
+print("\n===== PROJECT INSIGHTS =====")
+
+print("""
+1. Unemployment increased significantly during COVID-19.
+
+2. April and May 2020 showed the highest unemployment rates.
+
+3. States such as Bihar and Jharkhand experienced severe unemployment spikes.
+
+4. Rural and Urban regions were affected differently.
+
+5. Employment levels decreased sharply during lockdown periods.
+
+6. Labour participation rate influenced unemployment trends.
+
+7. Economic disruptions had a direct impact on job availability.
+""")
+
+print("===== ANALYSIS COMPLETED SUCCESSFULLY =====")
